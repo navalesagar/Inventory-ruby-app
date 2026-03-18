@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inventory Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h2 { margin-top: 30px; }
+    table { border-collapse: collapse; width: 80%; margin-bottom: 20px;}
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left;}
+    input, button, select { padding: 5px; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Inventory Dashboard</h1>
+
+  <!-- Add Product -->
+  <h2>Add Product</h2>
+  <form id="product-form">
+    <input type="text" id="product-name" placeholder="Name" required>
+    <input type="number" id="product-price" placeholder="Price" step="0.01" required>
+    <input type="number" id="product-quantity" placeholder="Quantity" required>
+    <button type="submit">Add Product</button>
+  </form>
+
+  <h3>Products</h3>
+  <table id="products-table">
+    <tr><th>ID</th><th>Name</th><th>Price</th><th>Quantity</th></tr>
+  </table>
+
+  <!-- Add Store -->
+  <h2>Add Store</h2>
+  <form id="store-form">
+    <input type="text" id="store-name" placeholder="Store Name" required>
+    <button type="submit">Add Store</button>
+  </form>
+
+  <h3>Stores</h3>
+  <table id="stores-table">
+    <tr><th>ID</th><th>Name</th></tr>
+  </table>
+
+  <!-- Add Sale -->
+  <h2>Record Sale</h2>
+  <form id="sale-form">
+    <select id="sale-product" required></select>
+    <select id="sale-store" required></select>
+    <input type="number" id="sale-quantity" placeholder="Quantity" required>
+    <button type="submit">Record Sale</button>
+  </form>
+
+  <h3>Sales</h3>
+  <table id="sales-table">
+    <tr><th>ID</th><th>Product</th><th>Store</th><th>Quantity</th><th>Date</th></tr>
+  </table>
+
+<script>
+  // Elements
+  const productForm = document.getElementById('product-form');
+  const storeForm = document.getElementById('store-form');
+  const saleForm = document.getElementById('sale-form');
+
+  const productsTable = document.getElementById('products-table');
+  const storesTable = document.getElementById('stores-table');
+  const salesTable = document.getElementById('sales-table');
+
+  const saleProduct = document.getElementById('sale-product');
+  const saleStore = document.getElementById('sale-store');
+
+  // Load Products
+  function loadProducts() {
+    fetch('/products')
+      .then(res => res.json())
+      .then(data => {
+        productsTable.innerHTML = '<tr><th>ID</th><th>Name</th><th>Price</th><th>Quantity</th></tr>';
+        saleProduct.innerHTML = '';
+        data.forEach(p => {
+          const row = productsTable.insertRow();
+          row.insertCell(0).innerText = p.id;
+          row.insertCell(1).innerText = p.name;
+          row.insertCell(2).innerText = Number(p.price).toFixed(2);
+          row.insertCell(3).innerText = p.quantity;
+
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.innerText = p.name;
+          saleProduct.appendChild(option);
+        });
+      });
+  }
+
+  // Load Stores
+  function loadStores() {
+    fetch('/stores')
+      .then(res => res.json())
+      .then(data => {
+        storesTable.innerHTML = '<tr><th>ID</th><th>Name</th></tr>';
+        saleStore.innerHTML = '';
+        data.forEach(s => {
+          const row = storesTable.insertRow();
+          row.insertCell(0).innerText = s.id;
+          row.insertCell(1).innerText = s.name;
+
+          const option = document.createElement('option');
+          option.value = s.id;
+          option.innerText = s.name;
+          saleStore.appendChild(option);
+        });
+      });
+  }
+
+  // Load Sales
+  function loadSales() {
+    fetch('/sales')
+      .then(res => res.json())
+      .then(data => {
+        salesTable.innerHTML = '<tr><th>ID</th><th>Product</th><th>Store</th><th>Quantity</th><th>Date</th></tr>';
+        data.forEach(s => {
+          const row = salesTable.insertRow();
+          row.insertCell(0).innerText = s.id;
+          row.insertCell(1).innerText = s.product_id;
+          row.insertCell(2).innerText = s.store_id;
+          row.insertCell(3).innerText = s.quantity;
+          row.insertCell(4).innerText = new Date(s.created_at).toLocaleString();
+        });
+      });
+  }
+
+  // Product Form Submit
+  productForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const product = {
+      name: document.getElementById('product-name').value,
+      price: parseFloat(document.getElementById('product-price').value),
+      quantity: parseInt(document.getElementById('product-quantity').value)
+    };
+    fetch('/products', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(product)
+    }).then(res => res.json())
+      .then(data => { alert(data.message); productForm.reset(); loadProducts(); });
+  });
+
+  // Store Form Submit
+  storeForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const store = { name: document.getElementById('store-name').value };
+    fetch('/stores', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(store)
+    }).then(res => res.json())
+      .then(data => { alert(data.message); storeForm.reset(); loadStores(); });
+  });
+
+  // Sale Form Submit
+  saleForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const sale = {
+      product_id: parseInt(saleProduct.value),
+      store_id: parseInt(saleStore.value),
+      quantity: parseInt(document.getElementById('sale-quantity').value)
+    };
+    fetch('/sales', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(sale)
+    }).then(res => res.json())
+      .then(data => { alert(data.message); saleForm.reset(); loadSales(); });
+  });
+
+  // Initial load
+  loadProducts();
+  loadStores();
+  loadSales();
+</script>
+</body>
+</html>
