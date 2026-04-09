@@ -1,5 +1,5 @@
 sudo apt update
-sudo apt install fontconfig openjdk-21-jre
+sudo apt install openjdk-21-jdk -y
 java -version
 #if jenkins installed and failed 
 #sudo apt-key del 7198F4B714ABFC68 2>/dev/null || true
